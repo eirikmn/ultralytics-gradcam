@@ -219,6 +219,7 @@ class YOLO:
 
     @smart_inference_mode()
     def predict(self, source=None, stream=False, **kwargs):
+        print("\n\n predict\n\n")
         """
         Perform prediction using the YOLO model.
 
@@ -241,17 +242,26 @@ class YOLO:
         overrides['conf'] = 0.25
         overrides.update(kwargs)  # prefer kwargs
         overrides['mode'] = kwargs.get('mode', 'predict')
+
+        
+
         assert overrides['mode'] in ['track', 'predict']
         if not is_cli:
             overrides['save'] = kwargs.get('save', False)  # do not save by default if called in Python
-        if not self.predictor:
+        if not self.predictor:        
             self.task = overrides.get('task') or self.task
             self.predictor = TASK_MAP[self.task][3](overrides=overrides, _callbacks=self.callbacks)
             self.predictor.setup_model(model=self.model, verbose=is_cli)
+            #print("\n\n")
+            #print(self.predictor)
+            #print("\n\n")
         else:  # only update args if predictor is already setup
             self.predictor.args = get_cfg(self.predictor.args, overrides)
             if 'project' in overrides or 'name' in overrides:
                 self.predictor.save_dir = self.predictor.get_save_dir()
+        print("\n\n") 
+        print(type(self.predictor))
+        print("\n\n")
         return self.predictor.predict_cli(source=source) if is_cli else self.predictor(source=source, stream=stream)
 
     def track(self, source=None, stream=False, persist=False, **kwargs):
@@ -505,3 +515,4 @@ class YOLO:
         """Reset all registered callbacks."""
         for event in callbacks.default_callbacks.keys():
             self.callbacks[event] = [callbacks.default_callbacks[event][0]]
+
