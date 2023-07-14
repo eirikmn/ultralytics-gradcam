@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 4
+names: ['Sediment', 'agglutinated', 'calcareous', 'planktic']
+
+roboflow:
+  workspace: test-wzks5
+  project: 4-class-forams-hd-raw
+  version: 2
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/test-wzks5/4-class-forams-hd-raw/dataset/2
