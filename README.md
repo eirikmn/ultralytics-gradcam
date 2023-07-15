@@ -41,4 +41,4 @@ results = model.predict(source=catimg, save=False, visualize = True, imgsz=1280)
 The resulting heat maps are stored in _runs/detect/_ as _.npy_ files. 
 
 
-A demonstration of this code is available in _yolo8-gradcam.ipynb_. 
+A demonstration is available in _yolo8-gradcam.ipynb_. 
