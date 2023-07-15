@@ -17,6 +17,8 @@ from ultralytics import YOLO
 
 Make sure that no other _ultralytics_ packages are downloaded in the environment.
 
+If you want to use the pre-trained weights used in the examples in this repository they can be downloaded from Dropbox using this [link](https://www.dropbox.com/scl/fo/lg6xk71a84bo6iauu5vts/h?rlkey=gyach1oy6irv605xhsenqfr32&dl=0).
+
 ## Applications
 
 First load the (pre-trained) YOLOv8 model and an image you want to apply Grad-CAM to, for example:
