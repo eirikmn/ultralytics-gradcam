@@ -89,9 +89,9 @@ class AutoBackend(nn.Module):
             w = attempt_download_asset(w)  # download if not local
 
         # NOTE: special case: in-memory pytorch model
-        print("\n\n hi autobackend \n")
+        
         if nn_module:
-            print("\n\n autobackend receive nn.module \n\n")
+
             model = weights.to(device)
             model = model.fuse(verbose=verbose) if fuse else model
             if hasattr(model, 'kpt_shape'):
@@ -100,12 +100,10 @@ class AutoBackend(nn.Module):
             names = model.module.names if hasattr(model, 'module') else model.names  # get class names
             model.half() if fp16 else model.float()
             self.model = model  # explicitly assign for to(), cpu(), cuda(), half()
-            print("\n print type(self.model) \n")
-            print(type(self.model))
-            print("\n\n")
+            
             pt = True
         elif pt:  # PyTorch
-            print("\n\n autobackend receive .pt model \n\n")
+
             from ultralytics.nn.tasks import attempt_load_weights
             model = attempt_load_weights(weights if isinstance(weights, list) else w,
                                          device=device,
@@ -118,7 +116,7 @@ class AutoBackend(nn.Module):
             model.half() if fp16 else model.float()
             self.model = model  # explicitly assign for to(), cpu(), cuda(), half()
         elif jit:  # TorchScript
-            print("\n\n autobackend receive jit model \n\n")
+
             LOGGER.info(f'Loading {w} for TorchScript inference...')
             extra_files = {'config.txt': ''}  # model metadata
             model = torch.jit.load(w, _extra_files=extra_files, map_location=device)
@@ -154,7 +152,7 @@ class AutoBackend(nn.Module):
             executable_network = ie.compile_model(network, device_name='CPU')  # device_name="MYRIAD" for NCS2
             metadata = w.parent / 'metadata.yaml'
         elif engine:  # TensorRT
-            print("\n\n autobackend receive engine model \n\n")
+
             LOGGER.info(f'Loading {w} for TensorRT inference...')
             try:
                 import tensorrt as trt  # noqa https://developer.nvidia.com/nvidia-tensorrt-download
@@ -199,7 +197,7 @@ class AutoBackend(nn.Module):
             model = ct.models.MLModel(w)
             metadata = dict(model.user_defined_metadata)
         elif saved_model:  # TF SavedModel
-            print("\n\n autobackend receive tf savedmodel model \n\n")
+
             LOGGER.info(f'Loading {w} for TensorFlow SavedModel inference...')
             import tensorflow as tf
             keras = False  # assume TF1 saved_model
@@ -313,10 +311,8 @@ class AutoBackend(nn.Module):
         Returns:
             (tuple): Tuple containing the raw output tensor, and processed output for visualization (if visualize=True)
         """
-        print("\n\n autobackend forward \n\n")
+
         b, ch, h, w = im.shape  # batch, channel, height, width
-        print("b, ch, h, w \n")
-        print(b, ch, h, w)
 
         if self.fp16 and im.dtype != torch.float16:
             im = im.half()  # to FP16
@@ -324,11 +320,8 @@ class AutoBackend(nn.Module):
             im = im.permute(0, 2, 3, 1)  # torch BCHW to numpy BHWC shape(1,320,192,3)
 
         if self.pt or self.nn_module:  # PyTorch
-            print("autobackend self.pt or self.nn_module \n")
-            print(type(self.model))
+            
             y = self.model(im, augment=augment, visualize=visualize) if augment or visualize else self.model(im)
-            print("\n\n autobackend forward y \n\n")
-            print(len(y))
             
         elif self.jit:  # TorchScript
             y = self.model(im)
@@ -410,13 +403,9 @@ class AutoBackend(nn.Module):
             y = [x if isinstance(x, np.ndarray) else x.numpy() for x in y]
             # y[0][..., :4] *= [w, h, w, h]  # xywh normalized to pixels
 
-        # for x in y:
-        #     print(type(x), len(x)) if isinstance(x, (list, tuple)) else print(type(x), x.shape)  # debug shapes
+        
         if isinstance(y, (list, tuple)):
-            print("list or tuple")
-            print(len(y))
-            print(type(y[0]))
-            print(type(y[1]))
+            
             return self.from_numpy(y[0]) if len(y) == 1 else [self.from_numpy(x) for x in y]
         else:
             return self.from_numpy(y)

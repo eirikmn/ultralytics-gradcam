@@ -108,7 +108,7 @@ class YOLO:
 
     def __call__(self, source=None, stream=False, **kwargs):
         """Calls the 'predict' function with given arguments to perform object detection."""
-        print("\n\n YOLO call \n\n")
+        
         return self.predict(source, stream, **kwargs)
 
     def __getattr__(self, attr):
@@ -220,7 +220,7 @@ class YOLO:
 
     #@smart_inference_mode()
     def predict(self, source=None, stream=False, **kwargs):
-        print("\n\n predict\n\n")
+        
         """
         Perform prediction using the YOLO model.
 
@@ -252,23 +252,14 @@ class YOLO:
         if not self.predictor:        
             self.task = overrides.get('task') or self.task
             self.predictor = TASK_MAP[self.task][3](overrides=overrides, _callbacks=self.callbacks)
-            print("\n\n setting up predictor_model, passing model=self.model \n type(self.predictor)")
-            print(type(self.predictor))
-            print("\n type(self.model)")
-            print(type(self.model))
-            print("\n\n")
+            
             self.predictor.setup_model(model=self.model, verbose=is_cli)
-            #print("\n\n")
-            #print(self.predictor)
-            #print("\n\n")
+            
         else:  # only update args if predictor is already setup
             self.predictor.args = get_cfg(self.predictor.args, overrides)
             if 'project' in overrides or 'name' in overrides:
                 self.predictor.save_dir = self.predictor.get_save_dir()
-        print("\n\n type(self.predictor)\n ") 
-        print(type(self.predictor))
-        print(type(self.predictor.model))
-        print("\n\n")
+        
         return self.predictor.predict_cli(source=source) if is_cli else self.predictor(source=source, stream=stream)
 
     def track(self, source=None, stream=False, persist=False, **kwargs):

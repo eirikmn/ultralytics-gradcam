@@ -46,10 +46,9 @@ def torch_distributed_zero_first(local_rank: int):
 def smart_inference_mode():
     """Applies torch.inference_mode() decorator if torch>=1.9.0 else torch.no_grad() decorator."""
 
-    print("\n\n smart_inference_mode \n\n")
+
     def decorate(fn):
-        print("\n smart_inference_mode: decorate \n torch.no_grad if False")
-        print(TORCH_1_9)
+        
         """Applies appropriate torch decorator for inference mode based on torch version."""
         return (torch.inference_mode if TORCH_1_9 else torch.no_grad)()(fn)
 

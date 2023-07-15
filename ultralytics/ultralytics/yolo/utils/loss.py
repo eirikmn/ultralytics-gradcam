@@ -157,19 +157,7 @@ class v8DetectionLoss:
         loss = torch.zeros(3, device=self.device)  # box, cls, dfl
         feats = preds[1] if isinstance(preds, tuple) else preds
         ####
-        print("\n\n preds[1]\n")
-        print(len(preds[1]))
-        print(preds[1][0].shape)
-        print("\n\n loss-> type(feats) \n\n")
-        print(type(feats))
-        print(len(feats))
-        print("\n\n feats0.shape, self.no\n")
-        print(feats[0].shape)
-        print(self.no)
-        print("\n\n")
-        print(type(batch))
-        print(batch)
-        print(batch.keys())
+        
         ####
         pred_distri, pred_scores = torch.cat([xi.view(feats[0].shape[0], self.no, -1) for xi in feats], 2).split(
             (self.reg_max * 4, self.nc), 1)
@@ -314,16 +302,11 @@ class v8DetectionLoss2:
 
     def __init__(self, model):  # model must be de-paralleled
 
-        print("\n\n v8detectionloss init\n\n")
-        print(type(self))
-        print(type(model))
-        print(type(model.model))
-        print(type(model.model.model))
-        #print(type(model.model.model.model)
+        
         device = next(model.model.parameters()).device  # get model device
         #h = model.args  # hyperparameters
 
-        print(type(model))
+        
         
         m = model.model.model[-1]  # Detect() module
         self.bce = nn.BCEWithLogitsLoss(reduction='none')
@@ -368,10 +351,7 @@ class v8DetectionLoss2:
 
     def __call__(self, preds, batch):
         """Calculate the sum of the loss for box, cls and dfl multiplied by batch size."""
-        print("\n\n v8detpred2 -> type(self)")
-        print(type(self))
-        print("\n type(preds)")
-        print("\n type(batch)")
+        
 
         loss = torch.zeros(3, device=self.device)  # box, cls, dfl
         feats = preds[1] if isinstance(preds, tuple) else preds

@@ -27,10 +27,7 @@ def preprocess(self, targets, batch_size, scale_tensor):
                 if n:
                     out[j, :n] = targets[matches, 1:]
             out[..., 1:5] = xywh2xyxy(out[..., 1:5].mul_(scale_tensor))
-            #print("\n\n preprocess inside \n\n")
-            #print(out.shape)
-            #print(out[0,0,:])
-            #print("\n\n")
+            
         return out
 
 
@@ -47,7 +44,7 @@ def bbox_decode(self, anchor_points, pred_dist, reg_max):
 
 
 def v8detectionlosscomputer(model, preds, targets, device):
-    print("\n\n v8detpred2 -> type(self)\n\n")
+    
     h = model.args  # hyperparameters
     #m = model.model[-1]  # Detect() module
     
@@ -64,67 +61,42 @@ def v8detectionlosscomputer(model, preds, targets, device):
     bbox_loss = BboxLoss(reg_max - 1, use_dfl=use_dfl).to(device)
     proj = torch.arange(reg_max, dtype=torch.float, device=device)
 
-    #print(len(preds))
-    #print(type(preds))
+    
     loss = torch.zeros(3, device=device)  # box, cls, dfl
     feats = preds[1] if isinstance(preds, tuple) else preds
     feats = preds[1] if isinstance(preds, list) else preds
 
-    print("\npred_distri, pred_scores\n")
-    
-    print(feats[0].shape)
-    print(feats[0].shape[0])
-    print(no)
-    print(reg_max*4)
-    print(nc)
     pred_distri, pred_scores = torch.cat([xi.view(feats[0].shape[0], no, -1) for xi in feats], 2).split(
         (reg_max * 4, nc), 1)
 
     
     pred_scores = pred_scores.permute(0, 2, 1).contiguous()
     pred_distri = pred_distri.permute(0, 2, 1).contiguous()
-    print("\n\n pred_scores.shape \n\n")
-    print(pred_scores.shape)
-    print("\n\n pred_scores.shape \n\n")
+    
     dtype = pred_scores.dtype
     batch_size = pred_scores.shape[0]
     imgsz = torch.tensor(feats[0].shape[2:], device=device, dtype=dtype) * stride[0]  # image size (h,w)
     anchor_points, stride_tensor = make_anchors(feats, stride, 0.5)
 
-    #print(len(anchor_points))
+    
     # targets
     #targets = torch.cat((batch['batch_idx'].view(-1, 1), batch['cls'].view(-1, 1), batch['bboxes']), 1)
     
-    print("\n preprocess \n")
     #print(batch_size)
     targets = preprocess(model, targets.to(device), batch_size, scale_tensor=imgsz[[1, 0, 1, 0]])
     # ground truth labels and boxes
 
     
     gt_labels, gt_bboxes = targets.split((1, 4), 2)  # cls, xyxy #gound truth
-    print("\n\n gt labels\n\n")
-    print(gt_labels)
-    print(gt_labels.shape)
-    print(gt_bboxes)
-    print(gt_bboxes.shape)
-    print("\n\n gt labels\n\n")
+    
     mask_gt = gt_bboxes.sum(2, keepdim=True).gt_(0) # ground truth
 
 
     # pboxes
-    print("\n bbox_decode \n")
+
     pred_bboxes = bbox_decode(model, anchor_points, pred_distri,reg_max)  # xyxy, (b, h*w, 4)
 
-    print(pred_bboxes.shape)
-    print(torch.sum(pred_bboxes>0.5))
-    print(pred_bboxes.shape)
-
-    print((preds[0].shape))
-    print((preds[1][0].shape))
-    print((preds[1][1].shape))
-    print((preds[1][2].shape))
-
-    print("\n assigner \n")
+    
     _, target_bboxes, target_scores, fg_mask, _ = assigner(
         pred_scores.detach().sigmoid(), (pred_bboxes.detach() * stride_tensor).type(gt_bboxes.dtype),
         anchor_points * stride_tensor, gt_labels, gt_bboxes, mask_gt)
@@ -137,26 +109,17 @@ def v8detectionlosscomputer(model, preds, targets, device):
     # loss[1] = self.varifocal_loss(pred_scores, target_scores, target_labels) / target_scores_sum  # VFL way
     loss[1] = bce(pred_scores, target_scores.to(dtype)).sum() / target_scores_sum  # BCE
 
-    print("\n\n slutt loss \n\n")
-    print(pred_distri.shape)
-    print(pred_bboxes.shape)
-    print(target_bboxes.shape)
-    print(target_bboxes)
-    print(target_scores.shape)
-    print(target_scores)
-    
-    print("\n\n")
     # bbox loss
     if fg_mask.sum():
         target_bboxes /= stride_tensor
         loss[0], loss[2] = bbox_loss(pred_distri, pred_bboxes, anchor_points, target_bboxes, target_scores,
                                             target_scores_sum, fg_mask)
 
-    #loss[0] *= hyp.box  # box gain #ignore box loss
-    loss[0] = 0
+    loss[0] *= hyp.box  # box gain #ignore box loss
+    #loss[0] = 0
     loss[1] *= hyp.cls  # cls gain
     loss[2] *= hyp.dfl  # dfl gain
 
-    print(loss)
+    
 
     return loss.sum() * batch_size, loss.detach()  # loss(box, cls, dfl)

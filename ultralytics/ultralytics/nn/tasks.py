@@ -33,7 +33,7 @@ class BaseModel(nn.Module):
 
 
     def save_gradient(self, grad):
-        # print('grad shape:', grad.shape)
+        
         self.grads_list.append(grad)
 
     def forward(self, x, *args, **kwargs):
@@ -48,7 +48,7 @@ class BaseModel(nn.Module):
             (torch.Tensor): The output of the network.
         """
         if isinstance(x, dict):  # for cases of training and validating while training.
-            print("\n\n isinstance \n\n")
+
             return self.loss(x, *args, **kwargs)
         return self.predict(x, *args, **kwargs)
 
@@ -67,7 +67,7 @@ class BaseModel(nn.Module):
             (torch.Tensor): The last output of the model.
         """
         if augment:
-            print("\n\n augment \n\n")
+
             return self._predict_augment(x)
         return self._predict_once(x, profile, visualize)
 
@@ -83,97 +83,55 @@ class BaseModel(nn.Module):
         Returns:
             (torch.Tensor): The last output of the model.
         """
-        print("predict once")
+
         y, dt = [], []  # outputs
         counter = 0
         for m in self.model:
             counter +=1
-            #print(m.requires_grad)
-#            print(m)
+            
             
             if m.f != -1:  # if not from previous layer
                 x = y[m.f] if isinstance(m.f, int) else [x if j == -1 else y[j] for j in m.f]  # from earlier layers
-                #print("m.f")
                 
                 
             if profile:
                 self._profile_one_layer(m, x, dt)
             
             
-            #print("\n\n x.requires_grad \n\n")
-            #print(x.requires_grad)
-            #print(type(m))
-            #print(len(x))
-            x = m(x)  # run
-            print(type(m))
-
-            if counter == 23:
-                print(m.nl)
-            #print(len(x))
-            #print("\nx = m(x) requires_grad")
-            #print(x.requires_grad)
             
-            """
-            if 'Detect' not in m.type:
-                    
-                x.requires_grad = True
-            else:
-                #print("\n\n else")
-                if isinstance(x, list):
-                    for _x in x:
-                        _x.requires_grad = True
-                elif isinstance(x, tuple):
-                    for _x in x[1]:
-                        _x.requires_grad = True
-            #
-            #    
-            if(type(x) == tuple):
-                print(len(x))
-                for ii in range(len(x)):
-                    print(ii)
-                    xx = x[ii]
-                    print(type(xx))
-                    xx.requires_grad = True
-                #print(type(x[0]))
-            else:
-                x.requires_grad = True # hideos hack
-            """
+            x = m(x)  # run
+            
+
+            #if counter == 23:
+            
+            
+            
             
             y.append(x if m.i in self.save else None)  # save output
 
             #save grad
             if visualize:
                 if 'Detect' not in m.type:
-                    #print("detect not in m.type registering hook")
+
                     x.register_hook(self.save_gradient)
                     self.features_list.append(x)
-                    #print("done registering hook")
+
                 else:
-                    #print("\n\n else: ")
+
                     if isinstance(x, list):
-                        #print("x is list: registering hook")
+
                         for _x in x:
                             _x.register_hook(self.save_gradient)
                             self.features_list.append(_x)
                     elif isinstance(x, tuple):
-                        #print("x is tuple: registering hook")
+
                         for _x in x[1]:
                             _x.register_hook(self.save_gradient)
                             self.features_list.append(_x)
-                #print("\n\n doing feature_visualization ")
+                
                 #feature_visualization(x, m.type, m.i, save_dir=visualize)
-                #print("\n done feature_visualization \n\n")
-            """
-            print("\n before shape")
-            print(m)
-            if type(x) == tuple:
-                print(x[0].shape)
-                print(x[1].shape)
-            else:
-                print(x.shape)
-            print("\n after shape")
-            print(len(x))
-            """
+                
+            
         return x
 
     def _predict_augment(self, x):
@@ -381,7 +339,7 @@ class DetectionModel(BaseModel):
         return y
 
     def init_criterion(self):
-        print("v8DetectionLoss")
+
         return v8DetectionLoss(self)
 
 

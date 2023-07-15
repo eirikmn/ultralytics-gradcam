@@ -95,7 +95,7 @@ class BasePredictor:
             cfg (str, optional): Path to a configuration file. Defaults to DEFAULT_CFG.
             overrides (dict, optional): Configuration overrides. Defaults to None.
         """
-        print("\n\n basepredictor init \n\n")
+        
         self.args = get_cfg(cfg, overrides)
         self.save_dir = self.get_save_dir()
         if self.args.conf is None:
@@ -126,7 +126,7 @@ class BasePredictor:
         return increment_path(Path(project) / name, exist_ok=self.args.exist_ok)
 
     def cam_show_img(self, img, feature_map, grads, out_name):
-        #print("\n\ncam_show_img \n\n")
+        
         #print(img.shape)
         H = img.shape[2]
         W = img.shape[3]
@@ -134,7 +134,9 @@ class BasePredictor:
         cam = np.zeros(feature_map.shape[1:], dtype=np.float32)		
         grads = grads.reshape([grads.shape[0],-1])					
         weights = np.mean(grads, axis=1)							
+        
         for i, w in enumerate(weights):
+
             cam += w * feature_map[i, :, :]							
         cam = np.maximum(cam, 0)
         cam = cam / cam.max()
@@ -143,34 +145,19 @@ class BasePredictor:
         out_np_name = out_name.rsplit(".", 1)[0]
         np.save(out_np_name+".npy", cam)
 
-        #print(cam.shape)
         heatmap = cv2.applyColorMap(np.uint8(255 * cam), cv2.COLORMAP_JET)
 
         #### edits by me ####
-        #print("\n\n cam img heatmap type \n\n")
-        #print(heatmap.shape)
-        #print(type(heatmap))
-        #heatmapp = torch.from_numpy(heatmap)
-        #heatmapp = heatmapp.permute((2,0,1))
-        #heatmap = heatmapp.permute((1,2,0))
+        
         
         imgg = img[0].detach().cpu().numpy()
         imgg = np.transpose(imgg,(1,2,0))
-        #imgg = img[0]
-        #print("imgg")
-        #print(type(imgg))
-        #print(imgg.shape)
-        #print(img[0].shape)
-        #print(img[0,:,:,:].shape)
         cam_img = 0.3 * heatmap + 0.7 * imgg
 
-        #print(out_name)
-        #print(cam_img.shape)
         
         cv2.imwrite(out_name, cam_img)
 
         #export heatmap as a text file
-        #print(cam_img.shape)
         
         
 
@@ -246,32 +233,17 @@ class BasePredictor:
         return preds
     
     def init_criterion(self):
-        print("\n\nv8DetectionLoss\n")
-        print(type(self))
-        print(type(self.model))
-        print(type(self.model.parameters()))
-        print("\n\n")
+        
         return v8DetectionLoss(self.model.model)
 
     def compute_loss(self, preds, targets):
-        print("\n\nv8DetectionLoss\n")
-        print(self.args.__dict__.keys())
-        print("\n\n")
-        print(self.__dict__.keys())
-        print("\n\n")
-        print(self.model.__dict__.keys())
-        print("\n\n")
-        print(self.model.model.__dict__.keys())
-        print("\n\n")
         #return v8DetectionLoss2(self)
         return v8detectionlosscomputer(self, preds, targets, self.device)
 
 
     def __call__(self, source=None, model=None, stream=False):
         """Performs inference on an image or stream."""
-        print("\n\n basepredictor __call__ \n")
-        print(type(self.model))
-        print("\n\n")
+        
         self.stream = stream
         if stream:
             return self.stream_inference(source, model)
@@ -320,7 +292,7 @@ class BasePredictor:
     #@smart_inference_mode()
     def stream_inference(self, source=None, model=None):
         """Streams real-time inference on camera feed and saves results to file."""
-        print("\n\n basepredictor stream_inference \n\n")
+        
         if self.args.verbose:
             LOGGER.info('')
 
@@ -338,19 +310,16 @@ class BasePredictor:
         ##############################################################################################################
         
         if self.args.visualize:
-            print("\n\n req grad True \n\n")
-            print(type(self.model))
+            
             # require grad
             for k, v in self.model.named_parameters(): #EMN: model does not have named_parameters apparently...
                 v.requires_grad = True  # train all layers
             #compute_loss = ComputeLoss(model)
-            print("\n\n req grad True1 \n\n")
-
+            
             #compute_loss = self.init_criterion()
             #compute_loss = self.loss()
             #compute_loss = v8DetectionLoss2(self.model.model)
-            print("\n\n req grad True2 \n\n")
-        
+            
         ############################################################################################################################
 
 
@@ -368,9 +337,7 @@ class BasePredictor:
         counter = 0
         for batch in self.dataset:
             counter += 1
-            print("\n\n batch#")
-            print(counter)
-            print("\n\n")
+            
             self.run_callbacks('on_predict_batch_start')
             self.batch = batch
             path, im0s, vid_cap, s = batch
@@ -380,13 +347,9 @@ class BasePredictor:
             # Preprocess
             with profilers[0]:
                 im = self.preprocess(im0s)
-                print("\n\n batch reqgrad\n")
-                #print(im0s.requires_grad)
-                print(im.requires_grad)
+                
                 im.requires_grad = True
-                #print("height")
-                #print(im.requires_grad)
-                #print("height")
+                
             # Inference
             with profilers[1]:
 
@@ -402,53 +365,42 @@ class BasePredictor:
 
                     preds = self.model(im, augment=self.args.augment, visualize=visualize)
                     
-                    #print(preds[1].shape)
-                    #print(preds)
+                    
                     #pred = model(img, augment=augment, visualize=visualize)
                     
                     
 
                     self.model.zero_grad()
                     
-                    #print("\n\n backpropprop \n\n")
-                    #print(preds[0].shape)
-                    #print(len(preds[1]))
-                    #print(preds[1][0].shape)
-                    #print(preds[1][1].shape)
-                    #print(preds[1][2].shape)
+                    
 
                     #targets = torch.zeros(2, 6)
-                    #print(self.args)
-                    #print(type(self.args))
-                    #print(self.args.__dict__.keys())
-                    labpath = "/Users/emy016/Dropbox/Postdoc2/Kurs/NORA summer school 2023/NORAprosjekt/sampleimg-3.txt"
-                    #print(labpath)
+                    
+
+                    ### CHANGE FILE PATH TO CORRESPONDING LABEL TEXT FILE ###
+
+                    labpath = "/Users/emy016/Dropbox/Postdoc2/Kurs/noratest/noratest-root/cats.txt"
+                    
+                    #########################################################
+
                     targets = self.labelreader(labpath=labpath)
-                    #print(targets.shape)
-                    #print(len(targets))
-                    #print(type(targets))
-                    #print(targets[0])
-                    #print("\n\n backpropprop \n\n")
+                    
                     
                     #targets = torch.zeros(2, 6) ###EMN: Finn ut av denne!!! 
                     
                     #create a target tensor with batch_idx, class, and bboxes filled with zeros
-                    print("\n\n targettensor \n\n")
+                    
                     
 
 
 
                     #targets = torch.cat((batch['batch_idx'].view(-1, 1), batch['cls'].view(-1, 1), batch['bboxes']), 1)
-                    print("\n\n backprop \n\n")
                     #loss, loss_items = compute_loss(preds, targets.to(self.args.device))
                     #loss, loss_items = loss(self.model, batch)
                     loss, loss_items = self.compute_loss(preds, targets)
-                    print("\n computed loss \n")
                     loss.requires_grad_(True)
-                    print("\n assigned req grad on loss \n")
                     loss.backward()
-                    print("\n backward pass \n")
-
+                    
 
                     _grads = self.model.model.grads_list
                     _grads.reverse()
@@ -457,18 +409,12 @@ class BasePredictor:
                     # for g, f in zip(_grads, _features):
                     #     print('grad', type(g), g.shape)
                     #     print('feature', type(f), f.shape)
-                    print("\n\n odd for loop \n\n")
                     
-                    print("\n\n odd for loop \n\n")
                     #for i in [17, 18, 19, 20, 21, 22, 23, 24, 25]:
                     for i in range(24):
                         
                         out_name = str(self.save_dir / f"{i}.jpg")
-                        #print("\n\n input arguments_ cam_show_img \n\n")
-                        #print(im.shape)
-                        #print(_features[i].cpu().detach().numpy()[0].shape)
-                        #print(_grads[i].cpu().detach().numpy()[0].shape)
-                        #print(out_name)
+                        
                         self.cam_show_img(im, _features[i].cpu().detach().numpy()[0], _grads[i].cpu().detach().numpy()[0], out_name)
                         #def cam_show_img(img, feature_map, grads, out_name)
                     preds = preds[0]
@@ -484,7 +430,7 @@ class BasePredictor:
                 self.results = self.postprocess(preds, im, im0s)
             self.run_callbacks('on_predict_postprocess_end')
 
-            print("\n\n visualize, save, write \n\n")
+            
             # Visualize, save, write results
             n = len(im0s)
             for i in range(n):
@@ -530,9 +476,7 @@ class BasePredictor:
 
     def setup_model(self, model, verbose=True):
         """Initialize YOLO model with given parameters and set it to evaluation mode."""
-        print("\n\n basepredictor setup model \n")
-        print(type(model))
-        print("\n basepredictor setup model \n\n")
+        
         device = select_device(self.args.device, verbose=verbose)
         model = model or self.args.model
         self.args.half &= device.type != 'cpu'  # half precision only supported on CUDA
